@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Ronde de Site - Théâtre Antique</title>
+  
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏛️</text></svg>">
+  
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+  <style>
+    :root {
+      --font-sans: 'Inter', system-ui, sans-serif;
+      --bg-color: #F5F0E8;
+      --app-bg: #FFFFFF;
+      --primary: #1E1208;
+      --accent: #C4A882;
+      --text-main: #1A1410;
+      --text-muted: #7A6A55;
+      --border-color: #E8E0D4;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--bg-color);
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 420px;
+      background: var(--app-bg);
+      min-height: 100vh;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+
+    @media (min-width: 480px) {
+      body { padding: 40px 20px; }
+      .app {
+        min-height: 850px;
+        border-radius: 24px;
+        overflow: hidden;
+        box-shadow: 0 20px 40px rgba(30, 18, 8, 0.08);
+        border: 8px solid white;
+      }
+    }
+
+    .screen { display: none; flex-direction: column; height: 100%; animation: fadeIn 0.3s ease; flex: 1; }
+    .screen.active { display: flex; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Topbar */
+    .topbar { background: var(--primary); padding: 16px 20px; display: flex; align-items: center; gap: 12px; position: sticky; top: 0; z-index: 50;}
+    .topbar-back { width: 36px; height: 36px; border-radius: 50%; background: rgba(196,168,130,0.12); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--accent); font-size: 18px; flex-shrink: 0; transition: background 0.2s;}
+    .topbar-title { font-size: 16px; font-weight: 600; color: #F5EFE6; flex: 1; }
+    .topbar-sub { font-size: 12px; color: #9C8A70; margin-top: 2px; }
+
+    /* Accueil */
+    .welcome-hero { background: var(--primary); padding: 40px 20px 30px; text-align: center; border-bottom-left-radius: 20px; border-bottom-right-radius: 20px;}
+    .arch-icon { width: 72px; height: 72px; background: rgba(196,168,130,0.1); border: 2px solid rgba(196,168,130,0.25); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
+    .arch-icon i { font-size: 32px; color: var(--accent); }
+    .welcome-title { font-size: 22px; font-weight: 600; color: #F5EFE6; }
+    .welcome-sub { font-size: 13px; color: #9C8A70; margin-top: 6px; text-transform: uppercase; letter-spacing: 0.05em;}
+
+    .welcome-body { padding: 24px 20px; background: var(--bg-color); flex: 1;}
+    .card { background: var(--app-bg); border: 1px solid var(--border-color); border-radius: 16px; padding: 24px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.02); }
+    .card-title { font-size: 16px; font-weight: 600; color: var(--text-main); margin-bottom: 6px; }
+    .card-sub { font-size: 14px; color: var(--text-muted); line-height: 1.5; margin-bottom: 20px; }
+    .field-label { font-size: 12px; font-weight: 600; text-transform: uppercase; color: #9C8A70; display: block; margin-bottom: 8px; }
+    .big-input { width: 100%; font-size: 15px; padding: 14px; border: 1px solid var(--border-color); border-radius: 12px; background: #FAF8F5; color: var(--text-main); outline: none; transition: all 0.2s; font-family: inherit;}
+    .big-input:focus { border-color: var(--accent); background: #FFF; box-shadow: 0 0 0 3px rgba(196,168,130,0.1); }
+
+    /* Boutons */
+    .btn-main { width: 100%; padding: 16px; background: var(--primary); color: #F5EFE6; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: transform 0.1s, background 0.2s; margin-top: 10px; font-family: inherit;}
+    .btn-main:active { transform: scale(0.98); background: #2D1C0C; }
+    .btn-outline { width: 100%; padding: 16px; background: transparent; color: #5C4A30; border: 1px solid #DDD5C5; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.2s; font-family: inherit;}
+    .btn-outline:active { background: #E8E0D4; }
+
+    /* Checklist Ronde */
+    .checklist-body { padding: 16px 20px 40px; background: var(--bg-color); flex: 1; overflow-y: auto; }
+    .check-card { background: var(--app-bg); border: 1px solid var(--border-color); border-radius: 16px; padding: 16px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
+    .check-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .check-icon { width: 36px; height: 36px; background: #FAF8F5; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 18px; flex-shrink: 0;}
+    .check-title { font-size: 15px; font-weight: 600; color: var(--text-main); }
+    
+    .status-btns { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 10px; }
+    .sbtn { padding: 12px 4px; border-radius: 10px; border: 1px solid var(--border-color); background: #FAF8F5; cursor: pointer; text-align: center; transition: all 0.15s; font-family: inherit; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;}
+    .sbtn i { font-size: 20px; color: #9C8A70; }
+    .sbtn span { font-size: 12px; font-weight: 600; color: var(--text-muted); }
+    
+    .sbtn.ok { background: #EAF5EE; border-color: #A3D4B5; box-shadow: 0 2px 8px rgba(26,107,60,0.1);}
+    .sbtn.ok i, .sbtn.ok span { color: #1A6B3C; }
+    .sbtn.warn { background: #FEF6E4; border-color: #F0C060; box-shadow: 0 2px 8px rgba(138,94,0,0.1);}
+    .sbtn.warn i, .sbtn.warn span { color: #8A5E00; }
+
+    .check-note { width: 100%; font-size: 13px; padding: 10px 12px; border: 1px dashed #DDD5C5; border-radius: 8px; background: transparent; color: var(--text-main); outline: none; transition: all 0.2s; font-family: inherit;}
+    .check-note:focus { border: 1px solid var(--accent); background: #FFF; }
+
+    /* Écran Fin */
+    .done-hero { background: var(--primary); padding: 50px 20px 30px; text-align: center; }
+    .done-circle { width: 80px; height: 80px; background: rgba(45,122,79,0.15); border: 3px solid #5BBF85; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; }
+    .done-circle i { font-size: 36px; color: #2D7A4F; }
+    .done-title { font-size: 24px; font-weight: 600; color: #F5EFE6; }
+    
+    .stats-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 20px; background: var(--bg-color); }
+    .stat { background: var(--app-bg); border: 1px solid var(--border-color); border-radius: 16px; padding: 16px 8px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.02);}
+    .stat-n { font-size: 28px; font-weight: 600; }
+    .stat-l { font-size: 13px; color: #9C8A70; margin-top: 4px; font-weight: 500;}
+
+    /* Listes & Historique */
+    .suivi-body { padding: 16px 20px 30px; background: var(--bg-color); flex: 1; overflow-y: auto;}
+    .year-tabs { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 8px; scrollbar-width: none; }
+    .year-tabs::-webkit-scrollbar { display: none; }
+    .year-tab { padding: 10px 20px; border-radius: 24px; border: 1px solid #DDD5C5; background: var(--app-bg); font-size: 14px; font-weight: 600; color: var(--text-muted); cursor: pointer; white-space: nowrap; transition: all 0.2s;}
+    .year-tab.active { background: var(--primary); color: #F5EFE6; border-color: var(--primary); }
+    
+    .ronde-card { background: var(--app-bg); border: 1px solid var(--border-color); border-radius: 16px; margin-bottom: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.02);}
+    .ronde-head { padding: 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; }
+    .ronde-av { width: 44px; height: 44px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; color: var(--accent); flex-shrink: 0; }
+    .ronde-name { font-size: 15px; font-weight: 600; color: var(--text-main); }
+    .ronde-date { font-size: 13px; color: var(--text-muted); margin-top: 2px; display: flex; align-items: center; gap: 6px; }
+    .badges { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+    .badge { font-size: 12px; padding: 4px 10px; border-radius: 12px; font-weight: 600; }
+    .b-ok { background: #EAF5EE; color: #1A6B3C; }
+    .b-warn { background: #FEF6E4; color: #8A5E00; }
+    
+    .ronde-detail { display: none; border-top: 1px solid #EDE6DC; background: #FAF8F5;}
+    .ronde-detail.open { display: block; }
+    .detail-item { padding: 12px 16px; border-bottom: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 8px; }
+    .detail-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; width: 100%; }
+    .detail-left { flex: 1; }
+    .detail-point { font-size: 14px; color: var(--text-main); font-weight: 600; }
+    .detail-note { font-size: 13px; color: #1A1410; margin-top: 6px; background: #FFFFFF; padding: 8px 10px; border-radius: 6px; border: 1px solid #E8E0D4; display: flex; gap: 6px; align-items: flex-start;}
+
+    /* Bouton Fait */
+    .btn-done-task { margin-top: 4px; padding: 8px 12px; border: none; border-radius: 8px; background: #EAF5EE; color: #1A6B3C; font-weight: 600; font-size: 12px; cursor: pointer; border: 1px solid #A3D4B5; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s; font-family: inherit; }
+    .btn-done-task:active { transform: scale(0.96); background: #D1E8DB; }
+
+    /* Helpers */
+    .empty-state { text-align: center; padding: 60px 20px; }
+    .empty-state i { font-size: 48px; color: #C8BFB0; display: block; margin-bottom: 16px; }
+    .empty-state p { font-size: 15px; color: var(--text-muted); font-weight: 500;}
+    .saving-wrap { text-align: center; padding: 80px 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; background: var(--bg-color); flex: 1;}
+    .saving-wrap i { font-size: 56px; color: var(--accent); display: block; margin-bottom: 20px; animation: pulse 1.5s infinite;}
+    @keyframes pulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.1); opacity: 0.7; } 100% { transform: scale(1); opacity: 1; } }
+  </style>
+</head>
+<body>
+
+<div class="app">
+
+  <div id="s-welcome" class="screen active">
+    <div class="welcome-hero">
+      <div class="arch-icon"><i class="ti ti-building-arch" aria-hidden="true"></i></div>
+      <div class="welcome-title">Théâtre Antique d'Orange</div>
+      <div class="welcome-sub">Maintenance & Sécurité</div>
+    </div>
+    <div class="welcome-body">
+      <div class="card">
+        <div class="card-title">Nouvelle inspection</div>
+        <div class="card-sub">Veuillez renseigner votre prénom pour accéder à la checklist de contrôle.</div>
+        <label class="field-label" for="prenom">Identifiant agent</label>
+        <input class="big-input" type="text" id="prenom" placeholder="Ex : Clément" autocomplete="given-name" />
+        <button class="btn-main" onclick="startTour()">
+          <i class="ti ti-list-check" aria-hidden="true"></i> Ouvrir la checklist
+        </button>
+      </div>
+      <button class="btn-outline" onclick="openSuivi()">
+        <i class="ti ti-clipboard-list" aria-hidden="true"></i> Historique des contrôles
+      </button>
+    </div>
+  </div>
+
+  <div id="s-tour" class="screen">
+    <div class="topbar">
+      <button class="topbar-back" onclick="resetTour()" aria-label="Retour"><i class="ti ti-x" aria-hidden="true"></i></button>
+      <div>
+        <div class="topbar-title">Checklist de ronde</div>
+        <div class="topbar-sub" id="tour-user-lbl">Agent en cours</div>
+      </div>
+    </div>
+    
+    <div class="checklist-body" id="checklist-cont">
+      </div>
+  </div>
+
+  <div id="s-saving" class="screen">
+    <div class="saving-wrap">
+      <i class="ti ti-cloud-upload" aria-hidden="true"></i>
+      <h2 style="font-size: 18px; color: var(--text-main);">Transmission en cours...</h2>
+      <p style="color: var(--text-muted); margin-top: 8px;">Enregistrement dans la base de données.</p>
+    </div>
+  </div>
+
+  <div id="s-done" class="screen">
+    <div class="done-hero">
+      <div class="done-circle"><i class="ti ti-check" aria-hidden="true"></i></div>
+      <div class="done-title">Contrôle transmis !</div>
+      <div class="topbar-sub" id="done-sub" style="color: #C4A882; margin-top: 8px;">...</div>
+    </div>
+    <div class="stats-row">
+      <div class="stat"><div class="stat-n" id="s-ok" style="color:#1A6B3C">0</div><div class="stat-l">Zones RAS</div></div>
+      <div class="stat"><div class="stat-n" id="s-warn" style="color:#8A5E00">0</div><div class="stat-l">Passages demandés</div></div>
+    </div>
+    <div style="padding: 20px; display: flex; flex-direction: column; gap: 12px; background: var(--bg-color); flex: 1;">
+      <button class="btn-main" onclick="openSuivi()"><i class="ti ti-clipboard-list" aria-hidden="true"></i> Consulter l'historique</button>
+      <button class="btn-outline" onclick="resetTour()"><i class="ti ti-home" aria-hidden="true"></i> Retour à l'accueil</button>
+    </div>
+  </div>
+
+  <div id="s-suivi" class="screen">
+    <div class="topbar">
+      <button class="topbar-back" onclick="show('s-welcome')" aria-label="Retour"><i class="ti ti-arrow-left" aria-hidden="true"></i></button>
+      <div style="flex:1">
+        <div class="topbar-title">Historique</div>
+        <div class="topbar-sub" id="suivi-sub">Chargement…</div>
+      </div>
+      <button class="topbar-back" onclick="exportAllExcel()" title="Exporter Excel"><i class="ti ti-download" aria-hidden="true" style="font-size:18px;"></i></button>
+    </div>
+    <div class="suivi-body">
+      <div class="year-tabs" id="year-tabs"></div>
+      <div class="year-tabs" id="month-tabs" style="margin-bottom: 16px;"></div>
+      <div id="rondes-list"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// Ton lien serveur (Mis à jour à l'identique de ton ancien code)
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzlgUlVy2oOOEcoppM3-sCoDLf7jKsob-l2yxgEVyQF-j_51FRbEN0A-1RxNX8zr3M63A/exec";
+
+// LocalStorage simulant la base locale de secours
+const storageAdapter = {
+  async list(prefix) {
+    const keys = [];
+    for(let i=0; i<localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if(k.startsWith(prefix)) keys.push(k);
+    }
+    return { keys };
+  },
+  async get(key) { return { value: localStorage.getItem(key) }; },
+  async set(key, value) { localStorage.setItem(key, value); }
+};
+
+// La liste exacte demandée par la maintenance
+const POINTS_CONTROLE = [
+  { id: "wc", label: "WC / Sanitaires", icon: "ti-bath" },
+  { id: "temple", label: "Temple", icon: "ti-building-monument" },
+  { id: "orchestra", label: "Orchestra", icon: "ti-music" },
+  { id: "terrasse_bout", label: "Terrasse Boutique", icon: "ti-shopping-cart" },
+  { id: "couloirs", label: "Les 2 couloirs (Boissons & face)", icon: "ti-arrows-split" },
+  { id: "grottes", label: "Grottes", icon: "ti-mountain" },
+  { id: "circ_inf", label: "Circulation inférieure", icon: "ti-arrow-down-circle" },
+  { id: "circ_sup", label: "Circulation supérieure", icon: "ti-arrow-up-circle" },
+  { id: "gradins", label: "Gradins", icon: "ti-stairs" },
+  { id: "panoramique", label: "Vue panoramique", icon: "ti-panorama-horizontal" },
+  { id: "terrasse_1", label: "Terrasse 1er étage", icon: "ti-layers-intersect" },
+  { id: "terrasse_2", label: "Terrasse 2ème étage", icon: "ti-layers-intersect-2" },
+  { id: "entree", label: "Entrée principale", icon: "ti-door-enter" },
+  { id: "escaliers", label: "Escaliers", icon: "ti-stairs-up" }
+];
+
+const ST = [
+  {k:"ras", label:"RAS", icon:"ti-check", cls:"ok"},
+  {k:"passage", label:"Passage demandé", icon:"ti-bell-ringing", cls:"warn"}
+];
+
+let state = {prenom:"", answers:{}, ts:null};
+let lastEntries = [];
+let allRondes = [];
+let curYear = "all";
+let curMonth = "all"; 
+
+function show(id) {
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+}
+
+function initials(n) {
+  return (n||"?").split(" ").map(w=>w[0]).join("").toUpperCase().slice(0,2);
+}
+
+// Fonction pour LIRE le tableau Sheets
+async function loadAll() {
+  try {
+    const response = await fetch(GOOGLE_SCRIPT_URL);
+    const data = await response.json();
+    
+    if (Array.isArray(data)) {
+      allRondes = data;
+      allRondes.sort((a,b) => b.ts - a.ts); 
+    } else {
+      allRondes = [];
+    }
+  } catch(e) {
+    console.error("Erreur de connexion au serveur", e);
+    try {
+      const res = await storageAdapter.list("ronde3:");
+      const keys = res.keys || [];
+      allRondes = [];
+      for(const k of keys) {
+        try { const r = await storageAdapter.get(k); if(r && r.value) allRondes.push(JSON.parse(r.value)); } catch(err){}
+      }
+      allRondes.sort((a,b) => b.ts - a.ts);
+    } catch(err) { allRondes = []; }
+  }
+}
+
+// Fonction pour ENVOYER les données vers Google Sheets
+async function saveRonde(obj) {
+  try {
+    await fetch(GOOGLE_SCRIPT_URL, { 
+      method: "POST", 
+      mode: "no-cors",
+      body: JSON.stringify(obj), 
+      headers: { "Content-Type": "text/plain;charset=utf-8" }
+    });
+    await storageAdapter.set("ronde3:"+obj.id, JSON.stringify(obj));
+  } catch(e) {
+    console.error("Erreur de sauvegarde", e);
+    alert("Le rapport est sauvegardé sur ce téléphone, mais la transmission au serveur a échoué. Vérifiez la connexion internet.");
+  }
+}
+
+// ==========================================
+// MARQUER COMME FAIT (RÉSEAU)
+// ==========================================
+async function marquerFaitEnReseau(rondeId, pointIndex) {
+  if (!confirm("Marquer cette tâche comme FAITE ?")) return;
+  
+  const ronde = allRondes.find(r => r.id === rondeId);
+  if (!ronde) return;
+  
+  const entree = ronde.entries[pointIndex];
+  
+  // On ajoute simplement "- Fait"
+  const suffixe = "- Fait";
+  const nouvelleNote = entree.note ? entree.note + " " + suffixe : suffixe;
+  
+  try {
+    await fetch(GOOGLE_SCRIPT_URL, {
+      method: "POST",
+      mode: "no-cors", 
+      body: JSON.stringify({
+        action: "update",
+        date: ronde.date,
+        prenom: ronde.prenom,
+        point: entree.point,
+        note: nouvelleNote
+      }),
+      headers: { "Content-Type": "text/plain;charset=utf-8" }
+    });
+    
+    entree.etat = "ras";
+    entree.note = nouvelleNote;
+    await storageAdapter.set("ronde3:" + ronde.id, JSON.stringify(ronde));
+    
+    renderSuivi(); 
+    
+  } catch (error) {
+    alert("Erreur réseau. Impossible de joindre la base (Vérifie ta connexion internet).");
+  }
+}
+
+function startTour() {
+  const p = document.getElementById("prenom").value.trim();
+  if(!p) { document.getElementById("prenom").focus(); return; }
+  state = {prenom:p, answers:{}, ts:Date.now()};
+  
+  document.getElementById("tour-user-lbl").textContent = "Agent : " + state.prenom;
+  renderChecklist();
+  show("s-tour");
+}
+
+function renderChecklist() {
+  const cont = document.getElementById("checklist-cont");
+  cont.innerHTML = "";
+  
+  POINTS_CONTROLE.forEach(p => {
+    const wrap = document.createElement("div");
+    wrap.className = "check-card";
+    
+    const head = document.createElement("div");
+    head.className = "check-header";
+    head.innerHTML = `<div class="check-icon"><i class="ti ${p.icon}"></i></div><div class="check-title">${p.label}</div>`;
+    
+    const row = document.createElement("div");
+    row.className = "status-btns";
+    ST.forEach(s => {
+      const b = document.createElement("button");
+      b.className = "sbtn";
+      b.innerHTML = `<i class="ti ${s.icon}"></i><span>${s.label}</span>`;
+      b.onclick = () => {
+        row.querySelectorAll(".sbtn").forEach(x => x.className = "sbtn");
+        b.className = "sbtn " + s.cls;
+        if(!state.answers[p.id]) state.answers[p.id] = {};
+        state.answers[p.id].status = s.k;
+      };
+      row.appendChild(b);
+    });
+    
+    const noteInp = document.createElement("input");
+    noteInp.type = "text";
+    noteInp.className = "check-note";
+    noteInp.placeholder = "Ajouter une note (ex: Poussières sur les télés)";
+    noteInp.oninput = (e) => {
+      if(!state.answers[p.id]) state.answers[p.id] = {};
+      state.answers[p.id].note = e.target.value;
+    };
+    
+    wrap.appendChild(head);
+    wrap.appendChild(row);
+    wrap.appendChild(noteInp);
+    cont.appendChild(wrap);
+  });
+  
+  const btnDiv = document.createElement("div");
+  btnDiv.style = "margin-top: 24px;";
+  btnDiv.innerHTML = `<button class="btn-main" style="padding: 18px;" onclick="finishTour()"><i class="ti ti-send" style="font-size:20px;"></i> Transmettre la ronde</button>`;
+  cont.appendChild(btnDiv);
+}
+
+async function finishTour() {
+  show("s-saving");
+  const now = new Date();
+  const ds = now.toLocaleDateString("fr-FR") + " " + now.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"});
+  const year = now.getFullYear().toString();
+  let entries = [];
+  
+  POINTS_CONTROLE.forEach(p => {
+    const a = state.answers[p.id] || {};
+    entries.push({
+      date: ds, 
+      prenom: state.prenom, 
+      lieu: "Théâtre Antique", 
+      point: p.label, 
+      grid_id: p.id,
+      etat: a.status || "Non vérifié", 
+      note: a.note || ""
+    });
+  });
+  
+  const obj = {id:state.ts+"_"+state.prenom.replace(/\s/g,""), ts:state.ts, date:ds, year, prenom:state.prenom, entries};
+  await saveRonde(obj);
+  lastEntries = entries;
+  
+  let ok=0, warn=0;
+  entries.forEach(e => { if(e.etat==="ras") ok++; else if(e.etat==="passage") warn++; });
+  
+  setTimeout(() => {
+    document.getElementById("s-ok").textContent = ok;
+    document.getElementById("s-warn").textContent = warn;
+    document.getElementById("done-sub").textContent = ds;
+    show("s-done");
+  }, 800);
+}
+
+async function openSuivi() {
+  show("s-suivi");
+  curYear = "all";
+  curMonth = "all"; 
+  document.getElementById("rondes-list").innerHTML = '<div class="empty-state"><i class="ti ti-loader" style="animation: spin 1s linear infinite" aria-hidden="true"></i><p>Chargement…</p></div>';
+  await loadAll();
+  buildYearTabs();
+  buildMonthTabs();
+  renderSuivi();
+}
+
+function buildYearTabs() {
+  const years = [...new Set(allRondes.map(r => r.year || new Date(r.ts).getFullYear().toString()))].sort((a,b) => b-a);
+  const tabs = document.getElementById("year-tabs");
+  if(years.length === 0) { tabs.innerHTML = ""; return; }
+  tabs.innerHTML = '<button class="year-tab active" onclick="setYear(\'all\',this)">Toutes les années</button>'
+    + years.map(y => '<button class="year-tab" onclick="setYear(\''+y+'\',this)">'+y+'</button>').join("");
+}
+
+function buildMonthTabs() {
+  const tabs = document.getElementById("month-tabs");
+  if (!tabs) return;
+  
+  const moisKeys = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"];
+  const moisNoms = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
+  
+  let html = `<button class="year-tab ${curMonth === 'all' ? 'active' : ''}" onclick="setMonth('all', this)">Tous les mois</button>`;
+  
+  moisKeys.forEach((k, idx) => {
+    html += `<button class="year-tab ${curMonth === k ? 'active' : ''}" onclick="setMonth('${k}', this)">${moisNoms[idx]}</button>`;
+  });
+  
+  tabs.innerHTML = html;
+}
+
+function setYear(y, btn) {
+  curYear = y;
+  curMonth = "all"; 
+  document.querySelectorAll("#year-tabs .year-tab").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  buildMonthTabs(); 
+  renderSuivi();
+}
+
+function setMonth(m, btn) {
+  curMonth = m;
+  document.querySelectorAll("#month-tabs .year-tab").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  renderSuivi();
+}
+
+function renderSuivi() {
+  const cont = document.getElementById("rondes-list");
+  let data = allRondes;
+  
+  // Filtrage par année
+  if(curYear !== "all") data = data.filter(r => (r.year || new Date(r.ts).getFullYear().toString()) === curYear);
+  
+  // Filtrage par mois (La fameuse correction du bug des dates)
+  if(curMonth !== "all") {
+    data = data.filter(r => {
+      const match = r.date.match(/\/(\d{2})\/\d{4}/);
+      return match && match[1] === curMonth;
+    });
+  }
+  
+  document.getElementById("suivi-sub").textContent = data.length + " contrôle(s) affiché(s)";
+  if(!data.length) {
+    cont.innerHTML = '<div class="empty-state"><i class="ti ti-filter-off" aria-hidden="true"></i><p>Aucun rapport trouvé pour cette sélection.</p></div>';
+    return;
+  }
+  
+  cont.innerHTML = "";
+  data.forEach((ronde, ri) => {
+    let ok=0, warn=0;
+    ronde.entries.forEach(e => { if(e.etat==="ras") ok++; else if(e.etat==="passage") warn++; });
+    
+    const wrap = document.createElement("div"); wrap.className = "ronde-card";
+    const head = document.createElement("div"); head.className = "ronde-head";
+    
+    const badgesHtml = (warn ? '<span class="badge b-warn"><i class="ti ti-bell-ringing" style="font-size:10px"></i> '+warn+' Demande(s)</span>' : '')
+      + (ok && !warn ? '<span class="badge b-ok"><i class="ti ti-check" style="font-size:10px"></i> 100% RAS</span>' : '');
+      
+    head.innerHTML = '<div class="ronde-av">' + initials(ronde.prenom) + '</div>'
+      + '<div style="flex:1;min-width:0;">'
+        + '<div class="ronde-name">' + ronde.prenom + '</div>'
+        + '<div class="ronde-date"><i class="ti ti-clock" style="font-size:14px" aria-hidden="true"></i> ' + ronde.date + '</div>'
+        + '<div class="badges">' + badgesHtml + '</div>'
+      + '</div>'
+      + '<i class="ti ti-chevron-down" style="color:#9C8A70; font-size:20px; transition: transform 0.2s;" id="chev-'+ri+'"></i>';
+      
+    const detail = document.createElement("div"); detail.className = "ronde-detail";
+    
+    let rows = ronde.entries.map((e, idx) => {
+      const bc = e.etat==="ras" ? "b-ok" : e.etat==="passage" ? "b-warn" : "";
+      const bl = e.etat==="ras" ? "RAS" : e.etat==="passage" ? "Passage demandé" : "Ignoré";
+      
+      let actionBtn = "";
+      if(e.etat === "passage") {
+        actionBtn = `<button class="btn-done-task" onclick="marquerFaitEnReseau('${ronde.id}', ${idx})">
+                       <i class="ti ti-check" style="font-size:16px;"></i> FAIT
+                     </button>`;
+      }
+
+      return '<div class="detail-item">'
+        + '<div class="detail-top">'
+        +   '<div class="detail-left">'
+        +     '<div class="detail-point">' + e.point + '</div>'
+        +     (e.note ? '<div class="detail-note"><i class="ti ti-messages" style="color:#C4A882; font-size:16px;"></i><span style="flex:1">' + e.note + '</span></div>' : '')
+        +   '</div>'
+        +   '<span class="badge ' + bc + '" style="flex-shrink:0;">' + bl + '</span>'
+        + '</div>'
+        + actionBtn
+        + '</div>';
+    }).join("");
+    
+    detail.innerHTML = rows;
+    
+    head.onclick = () => {
+      const open = detail.classList.toggle("open");
+      document.getElementById("chev-"+ri).style.transform = open ? "rotate(180deg)" : "";
+    };
+    wrap.appendChild(head); wrap.appendChild(detail); cont.appendChild(wrap);
+  });
+}
+
+function buildData(entries) {
+  const rows = [["Date et Heure", "Agent", "Zone", "Point de contrôle", "État", "Observations"]];
+  entries.forEach(e => {
+    const l = e.etat==="ras" ? "RAS" : e.etat==="passage" ? "Passage demandé" : "Non vérifié";
+    rows.push([e.date, e.prenom, e.lieu, e.point, l, e.note]);
+  });
+  return rows;
+}
+
+function exportExcel(entries) {
+  if(!entries || !entries.length) return;
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(buildData(entries));
+  ws["!cols"] = [{wch:18}, {wch:14}, {wch:25}, {wch:28}, {wch:18}, {wch:40}];
+  XLSX.utils.book_append_sheet(wb, ws, "Rapport");
+  XLSX.writeFile(wb, "Controle_Theatre_" + (entries[0]?.date||"").replace(/[\/ :]/g,"-") + ".xlsx");
+}
+
+async function exportAllExcel() {
+  if(!allRondes.length) return;
+  let data = allRondes;
+  
+  if(curYear !== "all") data = data.filter(r => (r.year || new Date(r.ts).getFullYear().toString()) === curYear);
+  if(curMonth !== "all") {
+    data = data.filter(r => {
+      const match = r.date.match(/\/(\d{2})\/\d{4}/);
+      return match && match[1] === curMonth;
+    });
+  }
+  
+  const all = data.flatMap(r => r.entries);
+  if(!all.length) return;
+  
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(buildData(all));
+  ws["!cols"] = [{wch:18}, {wch:14}, {wch:25}, {wch:28}, {wch:18}, {wch:40}];
+  
+  const labelAnnee = curYear === "all" ? "Global" : curYear;
+  const moisNoms = {"01":"Janvier","02":"Fevrier","03":"Mars","04":"Avril","05":"Mai","06":"Juin","07":"Juillet","08":"Aout","09":"Septembre","10":"Octobre","11":"Novembre","12":"Decembre"};
+  const labelMois = curMonth === "all" ? "" : "_" + moisNoms[curMonth];
+  
+  XLSX.utils.book_append_sheet(wb, ws, "Historique");
+  XLSX.writeFile(wb, "Historique_Controles_" + labelAnnee + labelMois + "_" + new Date().toISOString().slice(0,10) + ".xlsx");
+}
+
+function resetTour() { document.getElementById("prenom").value = ""; show("s-welcome"); }
+</script>
+</body>
+</html>
