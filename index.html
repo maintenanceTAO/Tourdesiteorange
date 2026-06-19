@@ -256,20 +256,23 @@ const storageAdapter = {
 
 // La liste exacte demandée par la maintenance
 const POINTS_CONTROLE = [
+  { id: "entree", label: "Entrée principale", icon: "ti-door-enter" },
   { id: "wc", label: "WC / Sanitaires", icon: "ti-bath" },
   { id: "temple", label: "Temple", icon: "ti-building-monument" },
+  { id: "scene_chainette", label: "Scène & Chaînette escalier", icon: "ti-stairs" },
   { id: "orchestra", label: "Orchestra", icon: "ti-music" },
+  { id: "allee_ouest", label: "Allée Orch. Ouest", icon: "ti-arrow-bear-right" },
+  { id: "allee_pourtoules", label: "Allée Orch. Pourtoules", icon: "ti-arrow-bear-left" },
   { id: "terrasse_bout", label: "Terrasse Boutique", icon: "ti-shopping-cart" },
-  { id: "couloirs", label: "Les 2 couloirs (Boissons & face)", icon: "ti-arrows-split" },
-  { id: "grottes", label: "Grottes", icon: "ti-mountain" },
-  { id: "circ_inf", label: "Circulation inférieure", icon: "ti-arrow-down-circle" },
-  { id: "circ_sup", label: "Circulation supérieure", icon: "ti-arrow-up-circle" },
-  { id: "gradins", label: "Gradins", icon: "ti-stairs" },
+  { id: "grottes_alcoves", label: "Grottes & Alcôves", icon: "ti-mountain" },
+  { id: "circ_inf", label: "Circ. inférieure", icon: "ti-arrow-down-circle" },
+  { id: "esc_pourtoules", label: "Esc. Pourtoules (Vérif. Tensaguide)", icon: "ti-barrier-block" },
+  { id: "circ_sup", label: "Circ. supérieure", icon: "ti-arrow-up-circle" },
+  { id: "esc_mort", label: "Esc. de la mort (Vérif. chaînette)", icon: "ti-stairs-down" },
+  { id: "gradins", label: "Gradins", icon: "ti-stairs-up" },
   { id: "panoramique", label: "Vue panoramique", icon: "ti-panorama-horizontal" },
-  { id: "terrasse_1", label: "Terrasse 1er étage", icon: "ti-layers-intersect" },
-  { id: "terrasse_2", label: "Terrasse 2ème étage", icon: "ti-layers-intersect-2" },
-  { id: "entree", label: "Entrée principale", icon: "ti-door-enter" },
-  { id: "escaliers", label: "Escaliers", icon: "ti-stairs-up" }
+  { id: "jardin_colline", label: "Jardin de la Colline", icon: "ti-tree" },
+  { id: "portes_colline", label: "Portes Colline (Vérif. verrouillage 2 grilles)", icon: "ti-lock" }
 ];
 
 const ST = [
