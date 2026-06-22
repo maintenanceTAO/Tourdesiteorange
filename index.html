@@ -103,7 +103,8 @@
     .sbtn.warn { background: #FEF6E4; border-color: #F0C060; box-shadow: 0 2px 8px rgba(138,94,0,0.1);}
     .sbtn.warn i, .sbtn.warn span { color: #8A5E00; }
 
-    .check-note { width: 100%; font-size: 13px; padding: 10px 12px; border: 1px dashed #DDD5C5; border-radius: 8px; background: transparent; color: var(--text-main); outline: none; transition: all 0.2s; font-family: inherit;}
+    /* Correction zone de texte */
+    .check-note { width: 100%; font-size: 13px; padding: 10px 12px; border: 1px dashed #DDD5C5; border-radius: 8px; background: transparent; color: var(--text-main); outline: none; transition: border 0.2s, background 0.2s; font-family: inherit; resize: none; overflow: hidden; min-height: 40px; line-height: 1.4;}
     .check-note:focus { border: 1px solid var(--accent); background: #FFF; }
 
     /* Écran Fin */
@@ -414,13 +415,16 @@ function renderChecklist() {
       row.appendChild(b);
     });
     
-    const noteInp = document.createElement("input");
-    noteInp.type = "text";
+    const noteInp = document.createElement("textarea");
     noteInp.className = "check-note";
     noteInp.placeholder = "Ajouter une note (ex: Poussières sur les télés)";
+    noteInp.rows = 1;
     noteInp.oninput = (e) => {
       if(!state.answers[p.id]) state.answers[p.id] = {};
       state.answers[p.id].note = e.target.value;
+      
+      e.target.style.height = "auto";
+      e.target.style.height = e.target.scrollHeight + "px";
     };
     
     wrap.appendChild(head);
