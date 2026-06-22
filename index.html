@@ -145,11 +145,17 @@
     .detail-left { flex: 1; }
     .detail-point { font-size: 14px; color: var(--text-main); font-weight: 600; }
     .detail-note { font-size: 13px; color: #1A1410; margin-top: 6px; background: #FFFFFF; padding: 8px 10px; border-radius: 6px; border: 1px solid #E8E0D4; display: flex; gap: 6px; align-items: flex-start;}
-    .detail-link-photo { font-size: 12px; font-weight: 600; color: #1A6B3C; background: #EAF5EE; padding: 6px 10px; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; border: 1px solid #A3D4B5;}
+    .detail-link-photo { font-size: 12px; font-weight: 600; color: #1A6B3C; background: #EAF5EE; padding: 6px 10px; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; border: 1px solid #A3D4B5;}
 
     /* Bouton Fait */
     .btn-done-task { margin-top: 4px; padding: 8px 12px; border: none; border-radius: 8px; background: #EAF5EE; color: #1A6B3C; font-weight: 600; font-size: 12px; cursor: pointer; border: 1px solid #A3D4B5; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s; font-family: inherit; }
     .btn-done-task:active { transform: scale(0.96); background: #D1E8DB; }
+
+    /* Modale Photo (La visionneuse interne) */
+    .photo-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 100; align-items: center; justify-content: center; padding: 20px; }
+    .photo-modal.active { display: flex; animation: fadeIn 0.2s ease; }
+    .photo-modal-content { max-width: 100%; max-height: 80vh; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); object-fit: contain; background: #FFF;}
+    .photo-modal-close { position: absolute; top: 20px; right: 20px; width: 40px; height: 40px; background: #FFF; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; border: none; font-size: 20px; color: #1E1208; box-shadow: 0 4px 10px rgba(0,0,0,0.2);}
 
     /* Helpers */
     .empty-state { text-align: center; padding: 60px 20px; }
@@ -163,6 +169,11 @@
 <body>
 
 <div class="app">
+
+  <div class="photo-modal" id="photo-modal">
+    <button class="photo-modal-close" onclick="closePhoto()"><i class="ti ti-x"></i></button>
+    <img src="" id="photo-modal-img" class="photo-modal-content" alt="Photo ronde">
+  </div>
 
   <div id="s-welcome" class="screen active">
     <div class="welcome-hero">
@@ -300,6 +311,17 @@ function initials(n) {
   return (n||"?").split(" ").map(w=>w[0]).join("").toUpperCase().slice(0,2);
 }
 
+// Ouvrir et fermer la visionneuse de photos
+function openPhoto(url) {
+  document.getElementById("photo-modal-img").src = url;
+  document.getElementById("photo-modal").classList.add("active");
+}
+
+function closePhoto() {
+  document.getElementById("photo-modal").classList.remove("active");
+  document.getElementById("photo-modal-img").src = "";
+}
+
 // Fonction pour LIRE le tableau Sheets
 async function loadAll() {
   try {
@@ -431,7 +453,7 @@ function renderChecklist() {
     
     photoBtn.onclick = () => fileInp.click();
 
-    // Système de compression magique pour pas faire exploser le serveur
+    // Système de compression magique
     fileInp.onchange = (e) => {
       const file = e.target.files[0];
       if(!file) return;
@@ -609,9 +631,9 @@ function renderSuivi() {
                      </button>`;
       }
 
-      // Ajout du bouton photo s'il y a une URL
-      const photoHtml = e.photoUrl && e.photoUrl.startsWith("http") 
-                        ? `<a href="${e.photoUrl}" target="_blank" class="detail-link-photo"><i class="ti ti-photo"></i> Voir la photo</a>` 
+      // MODIFICATION ICI : On utilise l'URL secrète de téléchargement Google Drive avec l'ID
+      const photoHtml = e.photoUrl && e.photoUrl.length > 5 && !e.photoUrl.includes("Erreur")
+                        ? `<button onclick="openPhoto('https://drive.google.com/uc?export=view&id=${e.photoUrl}')" class="detail-link-photo"><i class="ti ti-photo"></i> Voir la photo</button>` 
                         : '';
 
       return '<div class="detail-item">'
@@ -638,7 +660,7 @@ function renderSuivi() {
 }
 
 function buildData(entries) {
-  const rows = [["Date et Heure", "Agent", "Zone", "Point de contrôle", "État", "Observations", "Photo"]];
+  const rows = [["Date et Heure", "Agent", "Zone", "Point de contrôle", "État", "Observations", "ID Photo"]];
   entries.forEach(e => {
     const l = e.etat==="ras" ? "RAS" : e.etat==="passage" ? "Passage demandé" : "Non vérifié";
     rows.push([e.date, e.prenom, e.lieu, e.point, l, e.note, e.photoUrl || ""]);
@@ -650,7 +672,7 @@ function exportExcel(entries) {
   if(!entries || !entries.length) return;
   const wb = XLSX.utils.book_new();
   const ws = XLSX.utils.aoa_to_sheet(buildData(entries));
-  ws["!cols"] = [{wch:18}, {wch:14}, {wch:25}, {wch:28}, {wch:18}, {wch:40}, {wch:40}];
+  ws["!cols"] = [{wch:18}, {wch:14}, {wch:25}, {wch:28}, {wch:18}, {wch:40}, {wch:35}];
   XLSX.utils.book_append_sheet(wb, ws, "Rapport");
   XLSX.writeFile(wb, "Controle_Theatre_" + (entries[0]?.date||"").replace(/[\/ :]/g,"-") + ".xlsx");
 }
@@ -672,7 +694,7 @@ async function exportAllExcel() {
   
   const wb = XLSX.utils.book_new();
   const ws = XLSX.utils.aoa_to_sheet(buildData(all));
-  ws["!cols"] = [{wch:18}, {wch:14}, {wch:25}, {wch:28}, {wch:18}, {wch:40}, {wch:40}];
+  ws["!cols"] = [{wch:18}, {wch:14}, {wch:25}, {wch:28}, {wch:18}, {wch:40}, {wch:35}];
   
   const labelAnnee = curYear === "all" ? "Global" : curYear;
   const moisNoms = {"01":"Janvier","02":"Fevrier","03":"Mars","04":"Avril","05":"Mai","06":"Juin","07":"Juillet","08":"Aout","09":"Septembre","10":"Octobre","11":"Novembre","12":"Decembre"};
