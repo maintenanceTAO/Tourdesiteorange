@@ -631,10 +631,16 @@ function renderSuivi() {
                      </button>`;
       }
 
-      // MODIFICATION ICI : On utilise l'URL secrète de téléchargement Google Drive avec l'ID
-      const photoHtml = e.photoUrl && e.photoUrl.length > 5 && !e.photoUrl.includes("Erreur")
-                        ? `<button onclick="openPhoto('https://drive.google.com/uc?export=view&id=${e.photoUrl}')" class="detail-link-photo"><i class="ti ti-photo"></i> Voir la photo</button>` 
-                        : '';
+      // MODIFICATION ICI : On extrait l'ID pour la pop-up interne
+      let photoHtml = "";
+      if (e.photoUrl && e.photoUrl.length > 5 && !e.photoUrl.includes("Erreur")) {
+        let fileId = e.photoUrl;
+        if (e.photoUrl.includes("/d/")) {
+          fileId = e.photoUrl.split("/d/")[1].split("/")[0];
+        }
+        let directImgUrl = "https://drive.google.com/thumbnail?id=" + fileId + "&sz=w1000";
+        photoHtml = `<button onclick="openPhoto('${directImgUrl}')" class="detail-link-photo"><i class="ti ti-photo"></i> Voir la photo</button>`;
+      }
 
       return '<div class="detail-item">'
         + '<div class="detail-top">'
@@ -660,7 +666,7 @@ function renderSuivi() {
 }
 
 function buildData(entries) {
-  const rows = [["Date et Heure", "Agent", "Zone", "Point de contrôle", "État", "Observations", "ID Photo"]];
+  const rows = [["Date et Heure", "Agent", "Zone", "Point de contrôle", "État", "Observations", "Photo"]];
   entries.forEach(e => {
     const l = e.etat==="ras" ? "RAS" : e.etat==="passage" ? "Passage demandé" : "Non vérifié";
     rows.push([e.date, e.prenom, e.lieu, e.point, l, e.note, e.photoUrl || ""]);
@@ -672,7 +678,7 @@ function exportExcel(entries) {
   if(!entries || !entries.length) return;
   const wb = XLSX.utils.book_new();
   const ws = XLSX.utils.aoa_to_sheet(buildData(entries));
-  ws["!cols"] = [{wch:18}, {wch:14}, {wch:25}, {wch:28}, {wch:18}, {wch:40}, {wch:35}];
+  ws["!cols"] = [{wch:18}, {wch:14}, {wch:25}, {wch:28}, {wch:18}, {wch:40}, {wch:40}];
   XLSX.utils.book_append_sheet(wb, ws, "Rapport");
   XLSX.writeFile(wb, "Controle_Theatre_" + (entries[0]?.date||"").replace(/[\/ :]/g,"-") + ".xlsx");
 }
@@ -694,7 +700,7 @@ async function exportAllExcel() {
   
   const wb = XLSX.utils.book_new();
   const ws = XLSX.utils.aoa_to_sheet(buildData(all));
-  ws["!cols"] = [{wch:18}, {wch:14}, {wch:25}, {wch:28}, {wch:18}, {wch:40}, {wch:35}];
+  ws["!cols"] = [{wch:18}, {wch:14}, {wch:25}, {wch:28}, {wch:18}, {wch:40}, {wch:40}];
   
   const labelAnnee = curYear === "all" ? "Global" : curYear;
   const moisNoms = {"01":"Janvier","02":"Fevrier","03":"Mars","04":"Avril","05":"Mai","06":"Juin","07":"Juillet","08":"Aout","09":"Septembre","10":"Octobre","11":"Novembre","12":"Decembre"};
