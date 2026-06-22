@@ -103,9 +103,12 @@
     .sbtn.warn { background: #FEF6E4; border-color: #F0C060; box-shadow: 0 2px 8px rgba(138,94,0,0.1);}
     .sbtn.warn i, .sbtn.warn span { color: #8A5E00; }
 
-    /* Correction zone de texte */
-    .check-note { width: 100%; font-size: 13px; padding: 10px 12px; border: 1px dashed #DDD5C5; border-radius: 8px; background: transparent; color: var(--text-main); outline: none; transition: border 0.2s, background 0.2s; font-family: inherit; resize: none; overflow: hidden; min-height: 40px; line-height: 1.4;}
+    /* Zone Note + Appareil Photo */
+    .note-photo-wrap { display: flex; gap: 8px; align-items: flex-start; }
+    .check-note { flex: 1; font-size: 13px; padding: 10px 12px; border: 1px dashed #DDD5C5; border-radius: 8px; background: transparent; color: var(--text-main); outline: none; transition: border 0.2s, background 0.2s; font-family: inherit; resize: none; overflow: hidden; min-height: 42px; line-height: 1.4;}
     .check-note:focus { border: 1px solid var(--accent); background: #FFF; }
+    .btn-photo { width: 42px; height: 42px; flex-shrink: 0; border: 1px dashed #DDD5C5; border-radius: 8px; background: transparent; color: #9C8A70; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 20px; transition: all 0.2s; }
+    .btn-photo.has-photo { background: #EAF5EE; border-color: #A3D4B5; color: #1A6B3C; border-style: solid;}
 
     /* Écran Fin */
     .done-hero { background: var(--primary); padding: 50px 20px 30px; text-align: center; }
@@ -142,6 +145,7 @@
     .detail-left { flex: 1; }
     .detail-point { font-size: 14px; color: var(--text-main); font-weight: 600; }
     .detail-note { font-size: 13px; color: #1A1410; margin-top: 6px; background: #FFFFFF; padding: 8px 10px; border-radius: 6px; border: 1px solid #E8E0D4; display: flex; gap: 6px; align-items: flex-start;}
+    .detail-link-photo { font-size: 12px; font-weight: 600; color: #1A6B3C; background: #EAF5EE; padding: 6px 10px; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; border: 1px solid #A3D4B5;}
 
     /* Bouton Fait */
     .btn-done-task { margin-top: 4px; padding: 8px 12px; border: none; border-radius: 8px; background: #EAF5EE; color: #1A6B3C; font-weight: 600; font-size: 12px; cursor: pointer; border: 1px solid #A3D4B5; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s; font-family: inherit; }
@@ -199,7 +203,7 @@
     <div class="saving-wrap">
       <i class="ti ti-cloud-upload" aria-hidden="true"></i>
       <h2 style="font-size: 18px; color: var(--text-main);">Transmission en cours...</h2>
-      <p style="color: var(--text-muted); margin-top: 8px;">Enregistrement dans la base de données.</p>
+      <p style="color: var(--text-muted); margin-top: 8px;">Stockage de la ronde et des photos.</p>
     </div>
   </div>
 
@@ -238,10 +242,10 @@
 </div>
 
 <script>
-// Ton lien serveur (Mis à jour à l'identique de ton ancien code)
+// Ton lien serveur
 const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzlgUlVy2oOOEcoppM3-sCoDLf7jKsob-l2yxgEVyQF-j_51FRbEN0A-1RxNX8zr3M63A/exec";
 
-// LocalStorage simulant la base locale de secours
+// LocalStorage
 const storageAdapter = {
   async list(prefix) {
     const keys = [];
@@ -255,7 +259,7 @@ const storageAdapter = {
   async set(key, value) { localStorage.setItem(key, value); }
 };
 
-// La liste exacte demandée par la maintenance
+// La liste 
 const POINTS_CONTROLE = [
   { id: "entree", label: "Entrée principale", icon: "ti-door-enter" },
   { id: "wc", label: "WC / Sanitaires", icon: "ti-bath" },
@@ -301,7 +305,6 @@ async function loadAll() {
   try {
     const response = await fetch(GOOGLE_SCRIPT_URL);
     const data = await response.json();
-    
     if (Array.isArray(data)) {
       allRondes = data;
       allRondes.sort((a,b) => b.ts - a.ts); 
@@ -309,7 +312,6 @@ async function loadAll() {
       allRondes = [];
     }
   } catch(e) {
-    console.error("Erreur de connexion au serveur", e);
     try {
       const res = await storageAdapter.list("ronde3:");
       const keys = res.keys || [];
@@ -322,7 +324,7 @@ async function loadAll() {
   }
 }
 
-// Fonction pour ENVOYER les données vers Google Sheets
+// Fonction pour ENVOYER
 async function saveRonde(obj) {
   try {
     await fetch(GOOGLE_SCRIPT_URL, { 
@@ -333,23 +335,17 @@ async function saveRonde(obj) {
     });
     await storageAdapter.set("ronde3:"+obj.id, JSON.stringify(obj));
   } catch(e) {
-    console.error("Erreur de sauvegarde", e);
     alert("Le rapport est sauvegardé sur ce téléphone, mais la transmission au serveur a échoué. Vérifiez la connexion internet.");
   }
 }
 
-// ==========================================
-// MARQUER COMME FAIT (RÉSEAU)
-// ==========================================
+// MARQUER COMME FAIT
 async function marquerFaitEnReseau(rondeId, pointIndex) {
   if (!confirm("Marquer cette tâche comme FAITE ?")) return;
-  
   const ronde = allRondes.find(r => r.id === rondeId);
   if (!ronde) return;
-  
   const entree = ronde.entries[pointIndex];
   
-  // On ajoute simplement "- Fait"
   const suffixe = "- Fait";
   const nouvelleNote = entree.note ? entree.note + " " + suffixe : suffixe;
   
@@ -357,24 +353,16 @@ async function marquerFaitEnReseau(rondeId, pointIndex) {
     await fetch(GOOGLE_SCRIPT_URL, {
       method: "POST",
       mode: "no-cors", 
-      body: JSON.stringify({
-        action: "update",
-        date: ronde.date,
-        prenom: ronde.prenom,
-        point: entree.point,
-        note: nouvelleNote
-      }),
+      body: JSON.stringify({ action: "update", date: ronde.date, prenom: ronde.prenom, point: entree.point, note: nouvelleNote }),
       headers: { "Content-Type": "text/plain;charset=utf-8" }
     });
     
     entree.etat = "ras";
     entree.note = nouvelleNote;
     await storageAdapter.set("ronde3:" + ronde.id, JSON.stringify(ronde));
-    
     renderSuivi(); 
-    
   } catch (error) {
-    alert("Erreur réseau. Impossible de joindre la base (Vérifie ta connexion internet).");
+    alert("Erreur réseau. Impossible de joindre la base.");
   }
 }
 
@@ -414,22 +402,72 @@ function renderChecklist() {
       };
       row.appendChild(b);
     });
-    
+
+    // --- ZONE NOTE ET PHOTO ---
+    const bottomWrap = document.createElement("div");
+    bottomWrap.className = "note-photo-wrap";
+
     const noteInp = document.createElement("textarea");
     noteInp.className = "check-note";
-    noteInp.placeholder = "Ajouter une note (ex: Poussières sur les télés)";
+    noteInp.placeholder = "Ajouter une note...";
     noteInp.rows = 1;
     noteInp.oninput = (e) => {
       if(!state.answers[p.id]) state.answers[p.id] = {};
       state.answers[p.id].note = e.target.value;
-      
       e.target.style.height = "auto";
       e.target.style.height = e.target.scrollHeight + "px";
     };
+
+    // Bouton Photo
+    const photoBtn = document.createElement("button");
+    photoBtn.className = "btn-photo";
+    photoBtn.innerHTML = `<i class="ti ti-camera"></i>`;
+    
+    const fileInp = document.createElement("input");
+    fileInp.type = "file";
+    fileInp.accept = "image/*";
+    fileInp.capture = "environment"; // Ouvre l'appareil photo sur mobile
+    fileInp.style.display = "none";
+    
+    photoBtn.onclick = () => fileInp.click();
+
+    // Système de compression magique pour pas faire exploser le serveur
+    fileInp.onchange = (e) => {
+      const file = e.target.files[0];
+      if(!file) return;
+      
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          const MAX_WIDTH = 800; // Compression à 800px de large
+          const scaleSize = MAX_WIDTH / img.width;
+          canvas.width = MAX_WIDTH;
+          canvas.height = img.height * scaleSize;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          
+          const base64 = canvas.toDataURL("image/jpeg", 0.7); // Qualité 70%
+          
+          if(!state.answers[p.id]) state.answers[p.id] = {};
+          state.answers[p.id].photoBase64 = base64;
+          
+          photoBtn.classList.add("has-photo");
+          photoBtn.innerHTML = `<i class="ti ti-check"></i>`;
+        };
+        img.src = ev.target.result;
+      };
+      reader.readAsDataURL(file);
+    };
+
+    bottomWrap.appendChild(noteInp);
+    bottomWrap.appendChild(photoBtn);
+    bottomWrap.appendChild(fileInp);
     
     wrap.appendChild(head);
     wrap.appendChild(row);
-    wrap.appendChild(noteInp);
+    wrap.appendChild(bottomWrap);
     cont.appendChild(wrap);
   });
   
@@ -455,7 +493,8 @@ async function finishTour() {
       point: p.label, 
       grid_id: p.id,
       etat: a.status || "Non vérifié", 
-      note: a.note || ""
+      note: a.note || "",
+      photoBase64: a.photoBase64 || null
     });
   });
   
@@ -496,22 +535,17 @@ function buildYearTabs() {
 function buildMonthTabs() {
   const tabs = document.getElementById("month-tabs");
   if (!tabs) return;
-  
   const moisKeys = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"];
   const moisNoms = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
-  
   let html = `<button class="year-tab ${curMonth === 'all' ? 'active' : ''}" onclick="setMonth('all', this)">Tous les mois</button>`;
-  
   moisKeys.forEach((k, idx) => {
     html += `<button class="year-tab ${curMonth === k ? 'active' : ''}" onclick="setMonth('${k}', this)">${moisNoms[idx]}</button>`;
   });
-  
   tabs.innerHTML = html;
 }
 
 function setYear(y, btn) {
-  curYear = y;
-  curMonth = "all"; 
+  curYear = y; curMonth = "all"; 
   document.querySelectorAll("#year-tabs .year-tab").forEach(b => b.classList.remove("active"));
   btn.classList.add("active");
   buildMonthTabs(); 
@@ -529,10 +563,7 @@ function renderSuivi() {
   const cont = document.getElementById("rondes-list");
   let data = allRondes;
   
-  // Filtrage par année
   if(curYear !== "all") data = data.filter(r => (r.year || new Date(r.ts).getFullYear().toString()) === curYear);
-  
-  // Filtrage par mois (La fameuse correction du bug des dates)
   if(curMonth !== "all") {
     data = data.filter(r => {
       const match = r.date.match(/\/(\d{2})\/\d{4}/);
@@ -578,11 +609,17 @@ function renderSuivi() {
                      </button>`;
       }
 
+      // Ajout du bouton photo s'il y a une URL
+      const photoHtml = e.photoUrl && e.photoUrl.startsWith("http") 
+                        ? `<a href="${e.photoUrl}" target="_blank" class="detail-link-photo"><i class="ti ti-photo"></i> Voir la photo</a>` 
+                        : '';
+
       return '<div class="detail-item">'
         + '<div class="detail-top">'
         +   '<div class="detail-left">'
         +     '<div class="detail-point">' + e.point + '</div>'
         +     (e.note ? '<div class="detail-note"><i class="ti ti-messages" style="color:#C4A882; font-size:16px;"></i><span style="flex:1">' + e.note + '</span></div>' : '')
+        +     photoHtml
         +   '</div>'
         +   '<span class="badge ' + bc + '" style="flex-shrink:0;">' + bl + '</span>'
         + '</div>'
@@ -601,10 +638,10 @@ function renderSuivi() {
 }
 
 function buildData(entries) {
-  const rows = [["Date et Heure", "Agent", "Zone", "Point de contrôle", "État", "Observations"]];
+  const rows = [["Date et Heure", "Agent", "Zone", "Point de contrôle", "État", "Observations", "Photo"]];
   entries.forEach(e => {
     const l = e.etat==="ras" ? "RAS" : e.etat==="passage" ? "Passage demandé" : "Non vérifié";
-    rows.push([e.date, e.prenom, e.lieu, e.point, l, e.note]);
+    rows.push([e.date, e.prenom, e.lieu, e.point, l, e.note, e.photoUrl || ""]);
   });
   return rows;
 }
@@ -613,7 +650,7 @@ function exportExcel(entries) {
   if(!entries || !entries.length) return;
   const wb = XLSX.utils.book_new();
   const ws = XLSX.utils.aoa_to_sheet(buildData(entries));
-  ws["!cols"] = [{wch:18}, {wch:14}, {wch:25}, {wch:28}, {wch:18}, {wch:40}];
+  ws["!cols"] = [{wch:18}, {wch:14}, {wch:25}, {wch:28}, {wch:18}, {wch:40}, {wch:40}];
   XLSX.utils.book_append_sheet(wb, ws, "Rapport");
   XLSX.writeFile(wb, "Controle_Theatre_" + (entries[0]?.date||"").replace(/[\/ :]/g,"-") + ".xlsx");
 }
@@ -635,7 +672,7 @@ async function exportAllExcel() {
   
   const wb = XLSX.utils.book_new();
   const ws = XLSX.utils.aoa_to_sheet(buildData(all));
-  ws["!cols"] = [{wch:18}, {wch:14}, {wch:25}, {wch:28}, {wch:18}, {wch:40}];
+  ws["!cols"] = [{wch:18}, {wch:14}, {wch:25}, {wch:28}, {wch:18}, {wch:40}, {wch:40}];
   
   const labelAnnee = curYear === "all" ? "Global" : curYear;
   const moisNoms = {"01":"Janvier","02":"Fevrier","03":"Mars","04":"Avril","05":"Mai","06":"Juin","07":"Juillet","08":"Aout","09":"Septembre","10":"Octobre","11":"Novembre","12":"Decembre"};
