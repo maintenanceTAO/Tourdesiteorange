@@ -601,7 +601,8 @@ function renderSuivi() {
   }
   
   cont.innerHTML = "";
-  data.forEach((ronde, ri) => {
+
+  const creerCarte = (ronde, ri) => {
     let ok=0, warn=0;
     ronde.entries.forEach(e => { if(e.etat==="ras") ok++; else if(e.etat==="passage") warn++; });
     
@@ -663,7 +664,21 @@ function renderSuivi() {
       document.getElementById("chev-"+ri).style.transform = open ? "rotate(180deg)" : "";
     };
     wrap.appendChild(head); wrap.appendChild(detail); cont.appendChild(wrap);
-  });
+  };
+
+  // 2. AFFICHAGE INSTANTANÉ DU PREMIER RAPPORT
+  if (data.length > 0) {
+    creerCarte(data[0], 0);
+  }
+
+  // 3. CHARGEMENT DE TOUT LE RESTE EN ARRIÈRE-PLAN
+  if (data.length > 1) {
+    setTimeout(() => {
+      for (let i = 1; i < data.length; i++) {
+        creerCarte(data[i], i);
+      }
+    }, 150);
+  }
 }
 
 function buildData(entries) {
